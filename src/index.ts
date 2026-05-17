@@ -1,17 +1,30 @@
-// Main hook
+// ── Core hook ──────────────────────────────────────────────
 export { usePromiseState } from './hooks/usePromiseState';
 
-// Types — consumers need these for TypeScript
+// ── Types ──────────────────────────────────────────────────
 export type {
   ExternalSyncState,
   PromiseState,
   PromiseStatus,
   UsePromiseStateOptions,
   UsePromiseStateReturn,
-} from './types/types';
+} from './types';
 
-// Error classes — consumers may want to check instanceof
-export { CancelledError, TimeoutError } from './types/types';
+// ── Error classes ──────────────────────────────────────────
+export { CancelledError, TimeoutError } from '@/types';
 
-// Utility exports for power users
-export { exponentialBackoff } from './utils/utils';
+// ── Utilities ──────────────────────────────────────────────
+export { exponentialBackoff } from './utils';
+
+// ── Loader components ──────────────────────────────────────
+export { MorphSpinner }  from './components/loaders/MorphSpinner';
+export { PulseWave }     from './components/loaders/PulseWave';
+export { OrbitDots }     from './components/loaders/OrbitDots';
+export { GlassCard }     from './components/loaders/GlassCard';
+export { MorphButton }   from './components/loaders/MorphButton';
+
+export type { MorphSpinnerProps } from './components/loaders/MorphSpinner';
+export type { PulseWaveProps }    from './components/loaders/PulseWave';
+export type { OrbitDotsProps }    from './components/loaders/OrbitDots';
+export type { GlassCardProps }    from './components/loaders/GlassCard';
+export type { MorphButtonProps }  from './components/loaders/MorphButton';

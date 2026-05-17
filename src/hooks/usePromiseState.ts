@@ -5,15 +5,15 @@ import type {
   PromiseStatus,
   UsePromiseStateOptions,
   UsePromiseStateReturn,
-} from '../types/types';
-import { CancelledError, TimeoutError } from '../types/types';
+} from '../types';
+import { CancelledError, TimeoutError } from '../types';
 import {
   clampProgress,
   getRetryDelay,
   isCancelledError,
   sleep,
   withTimeout,
-} from '../utils/utils';
+} from '@/utils';
 
 // ─────────────────────────────────────────────────────────────
 // Internal reducer — single source of truth

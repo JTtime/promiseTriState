@@ -1,4 +1,4 @@
-import { TimeoutError, CancelledError } from '..//types/types';
+import { TimeoutError, CancelledError } from '@/types';
 
 // ─────────────────────────────────────────────────────────────
 // Retry delay calculator — supports fixed ms or exponential backoff fn

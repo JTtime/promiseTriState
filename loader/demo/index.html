@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TriState Loader — Component Demo</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0d0d12;
+    --surface:  #15151e;
+    --border:   rgba(255,255,255,0.08);
+    --text:     #e8e8f0;
+    --muted:    #6b6b80;
+    --accent:   #6C63FF;
+    --error:    #EF4444;
+    --success:  #22c55e;
+    --font:     'DM Sans', system-ui, sans-serif;
+    --mono:     'DM Mono', 'Fira Code', monospace;
+
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-snap:   cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 24px 80px;
+    line-height: 1.6;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    margin-bottom: 64px;
+  }
+  .header h1 {
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 60%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+  .header p {
+    color: var(--muted);
+    font-size: 16px;
+    font-weight: 400;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .badge {
+    display: inline-block;
+    background: rgba(108,99,255,0.12);
+    border: 1px solid rgba(108,99,255,0.3);
+    color: #a78bfa;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+  }
+
+  /* ── Layout ── */
+  .section {
+    max-width: 900px;
+    margin: 0 auto 64px;
+  }
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Demo card ── */
+  .demo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .demo-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .demo-card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .demo-card-sub {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-top: 2px;
+  }
+  .demo-card-body {
+    padding: 40px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .ctrl-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.01em;
+  }
+  .ctrl-btn:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.15);
+  }
+  .ctrl-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    box-shadow: 0 4px 16px rgba(108,99,255,0.4);
+  }
+  .ctrl-btn.danger { --accent: #EF4444; }
+  .ctrl-btn.success { --accent: #22c55e; }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.7;
+  }
+  .dot.pending  { background: #f59e0b; animation: dot-blink 1s ease infinite; }
+  .dot.fulfilled { background: #22c55e; }
+  .dot.rejected  { background: #ef4444; }
+
+  @keyframes dot-blink {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  /* ── Status pill ── */
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .status-pill.idle      { background: rgba(255,255,255,0.06); color: var(--muted); }
+  .status-pill.pending   { background: rgba(245,158,11,0.1); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
+  .status-pill.fulfilled { background: rgba(34,197,94,0.1);  color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
+  .status-pill.rejected  { background: rgba(239,68,68,0.1);  color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+
+  /* ── Color swatches ── */
+  .swatch-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .swatch {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+    flex-shrink: 0;
+  }
+  .swatch:hover { transform: scale(1.15); }
+  .swatch.active { border-color: white; transform: scale(1.1); }
+
+  /* ── Size picker ── */
+  .size-label {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.1);
+    outline: none;
+    cursor: pointer;
+    width: 100px;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+
+  /* ── Loader stage ── */
+  .loader-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    min-width: 120px;
+  }
+
+  /* ── Code hint ── */
+  .code-hint {
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+  .code-hint code {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: #a78bfa;
+    line-height: 1.7;
+  }
+  .code-hint code .dim { color: var(--muted); }
+  .code-hint code .str { color: #86efac; }
+  .code-hint code .kw  { color: #93c5fd; }
+
+  /* ── Grid for multiple size variants ── */
+  .variant-grid {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .variant-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .variant-item .label {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Divider ── */
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 80px;
+  }
+  .footer a { color: var(--accent); text-decoration: none; }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .demo-card-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  }
+</style>
+
+<!-- ── Shared CSS keyframes (mimics what the library injects) ── -->
+<style id="tsl-keyframes">
+  :root {
+    --tsl-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --tsl-ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --tsl-ease-snap:   cubic-bezier(0.2, 0, 0, 1);
+  }
+  @keyframes tsl-spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes tsl-scale-in {
+    0%   { transform: scale(0) rotate(-45deg); opacity: 0; }
+    60%  { transform: scale(1.15) rotate(3deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  @keyframes tsl-bg-fill {
+    0%   { r: 0; opacity: 0; }
+    100% { r: 42; opacity: 1; }
+  }
+  @keyframes tsl-ring-shrink {
+    0%   { stroke-dashoffset: 0; opacity: 1; }
+    100% { stroke-dashoffset: -264; opacity: 0; }
+  }
+  @keyframes tsl-check-draw {
+    0%   { stroke-dashoffset: 50; }
+    100% { stroke-dashoffset: 0; }
+  }
+  @keyframes tsl-cross-draw {
+    0%   { stroke-dashoffset: 30; }
+    100% { stroke-dashoffset: 0; }
+  }
+  @keyframes tsl-error-shake {
+    0%, 100% { transform: translateX(0); }
+    20%       { transform: translateX(-6px); }
+    40%       { transform: translateX(6px); }
+    60%       { transform: translateX(-4px); }
+    80%       { transform: translateX(4px); }
+  }
+  @keyframes tsl-pulse-ring {
+    0%   { transform: scale(1); opacity: 0.7; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+  @keyframes tsl-wave-bar {
+    0%, 100% { transform: scaleY(0.25); }
+    50%       { transform: scaleY(1); }
+  }
+  @keyframes tsl-tick-pop {
+    0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+    60%  { transform: scale(1.2) rotate(4deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  @keyframes tsl-error-pop {
+    0%   { transform: scale(0); opacity: 0; }
+    50%  { transform: scale(1.25); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes tsl-orbit {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes tsl-dot-breathe {
+    0%, 100% { opacity: 0.9; r: 5; }
+    50%       { opacity: 0.3; r: 3; }
+  }
+  @keyframes tsl-center-pop {
+    0%   { transform: scale(0); opacity: 0; }
+    60%  { transform: scale(1.25); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes tsl-shimmer {
+    0%   { transform: translateX(-160%) skewX(-12deg); }
+    100% { transform: translateX(260%) skewX(-12deg); }
+  }
+  @keyframes tsl-glass-fade-in {
+    0%   { opacity: 0; transform: translateY(6px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes tsl-float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-4px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="badge">v0.1.0 — npm link ready</div>
+  <h1>TriState Loader</h1>
+  <p>Seamless promise-state transitions. Pending → Fulfilled → Rejected as one continuous experience.</p>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════
+     1. MORPH SPINNER
+══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-label">01 — MorphSpinner</div>
+  <div class="demo-card">
+    <div class="demo-card-header">
+      <div>
+        <div class="demo-card-title">MorphSpinner</div>
+        <div class="demo-card-sub">Spinning arc → filled circle → checkmark / ✕</div>
+      </div>
+      <div class="controls" id="ms-controls">
+        <button class="ctrl-btn active" onclick="setStatus('ms','idle')"><span class="dot"></span>Idle</button>
+        <button class="ctrl-btn" onclick="setStatus('ms','pending')"><span class="dot pending"></span>Pending</button>
+        <button class="ctrl-btn success" onclick="setStatus('ms','fulfilled')"><span class="dot fulfilled"></span>Fulfilled</button>
+        <button class="ctrl-btn danger" onclick="setStatus('ms','rejected')"><span class="dot rejected"></span>Rejected</button>
+      </div>
+    </div>
+    <div class="demo-card-body">
+      <div class="variant-grid">
+        <div class="variant-item">
+          <div class="loader-stage" id="ms-sm"></div>
+          <span class="label">32px</span>
+        </div>
+        <div class="variant-item">
+          <div class="loader-stage" id="ms-md"></div>
+          <span class="label">56px</span>
+        </div>
+        <div class="variant-item">
+          <div class="loader-stage" id="ms-lg"></div>
+          <span class="label">80px</span>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:12px; align-items:flex-start;">
+        <div class="status-pill idle" id="ms-pill">● IDLE</div>
+        <div class="swatch-row" id="ms-swatches"></div>
+        <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+          <span class="size-label">Speed</span>
+          <input type="range" min="400" max="1600" value="900" id="ms-speed" oninput="updateMSSpeed(this.value)">
+        </div>
+      </div>
+    </div>
+    <div class="code-hint">
+      <code>
+        <span class="kw">import</span> { MorphSpinner } <span class="kw">from</span> <span class="str">'tristate-loader'</span><br>
+        <span class="dim">// Promise status drives the animation — no other logic needed</span><br>
+        &lt;MorphSpinner <span class="kw">status</span>={status} <span class="kw">size</span>={56} <span class="kw">color</span>=<span class="str">"#6C63FF"</span> /&gt;
+      </code>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     2. PULSE WAVE
+══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-label">02 — PulseWave</div>
+  <div class="demo-card">
+    <div class="demo-card-header">
+      <div>
+        <div class="demo-card-title">PulseWave</div>
+        <div class="demo-card-sub">Equalizer bars → collapse → tick or scatter + ✕</div>
+      </div>
+      <div class="controls">
+        <button class="ctrl-btn active" onclick="setStatus('pw','idle')"><span class="dot"></span>Idle</button>
+        <button class="ctrl-btn" onclick="setStatus('pw','pending')"><span class="dot pending"></span>Pending</button>
+        <button class="ctrl-btn success" onclick="setStatus('pw','fulfilled')"><span class="dot fulfilled"></span>Fulfilled</button>
+        <button class="ctrl-btn danger" onclick="setStatus('pw','rejected')"><span class="dot rejected"></span>Rejected</button>
+      </div>
+    </div>
+    <div class="demo-card-body">
+      <div class="loader-stage" id="pw-stage"></div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="status-pill idle" id="pw-pill">● IDLE</div>
+        <div class="swatch-row" id="pw-swatches"></div>
+      </div>
+    </div>
+    <div class="code-hint">
+      <code>
+        &lt;PulseWave <span class="kw">status</span>={status} <span class="kw">size</span>={56} <span class="kw">barCount</span>={5} /&gt;
+      </code>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     3. ORBIT DOTS
+══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-label">03 — OrbitDots</div>
+  <div class="demo-card">
+    <div class="demo-card-header">
+      <div>
+        <div class="demo-card-title">OrbitDots</div>
+        <div class="demo-card-sub">Orbiting dots collapse inward → check or fly outward → ✕</div>
+      </div>
+      <div class="controls">
+        <button class="ctrl-btn active" onclick="setStatus('od','idle')"><span class="dot"></span>Idle</button>
+        <button class="ctrl-btn" onclick="setStatus('od','pending')"><span class="dot pending"></span>Pending</button>
+        <button class="ctrl-btn success" onclick="setStatus('od','fulfilled')"><span class="dot fulfilled"></span>Fulfilled</button>
+        <button class="ctrl-btn danger" onclick="setStatus('od','rejected')"><span class="dot rejected"></span>Rejected</button>
+      </div>
+    </div>
+    <div class="demo-card-body">
+      <div class="loader-stage" id="od-stage"></div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="status-pill idle" id="od-pill">● IDLE</div>
+        <div class="swatch-row" id="od-swatches"></div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+          <span class="size-label">Dots</span>
+          <input type="range" min="3" max="8" value="4" id="od-dots"
+            oninput="document.getElementById('od-dotcount').textContent=this.value; renderOD()">
+          <span class="size-label" id="od-dotcount">4</span>
+        </div>
+      </div>
+    </div>
+    <div class="code-hint">
+      <code>
+        &lt;OrbitDots <span class="kw">status</span>={status} <span class="kw">dotCount</span>={4} <span class="kw">size</span>={64} /&gt;
+      </code>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     4. GLASS CARD
+══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-label">04 — GlassCard</div>
+  <div class="demo-card">
+    <div class="demo-card-header">
+      <div>
+        <div class="demo-card-title">GlassCard</div>
+        <div class="demo-card-sub">Skeleton shimmer card → success glow or error border</div>
+      </div>
+      <div class="controls">
+        <button class="ctrl-btn active" onclick="setStatus('gc','idle')"><span class="dot"></span>Idle</button>
+        <button class="ctrl-btn" onclick="setStatus('gc','pending')"><span class="dot pending"></span>Pending</button>
+        <button class="ctrl-btn success" onclick="setStatus('gc','fulfilled')"><span class="dot fulfilled"></span>Fulfilled</button>
+        <button class="ctrl-btn danger" onclick="setStatus('gc','rejected')"><span class="dot rejected"></span>Rejected</button>
+      </div>
+    </div>
+    <div class="demo-card-body" style="padding: 40px 24px 32px;">
+      <div id="gc-stage"></div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="status-pill idle" id="gc-pill">● IDLE</div>
+        <div class="swatch-row" id="gc-swatches"></div>
+      </div>
+    </div>
+    <div class="code-hint">
+      <code>
+        &lt;GlassCard <span class="kw">status</span>={status} <span class="kw">width</span>={280} <span class="kw">height</span>={160}<br>
+        &nbsp;&nbsp;<span class="kw">successMessage</span>=<span class="str">"Data loaded"</span> <span class="kw">errorMessage</span>=<span class="str">"Failed to load"</span> /&gt;
+      </code>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     5. MORPH BUTTON
+══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-label">05 — MorphButton</div>
+  <div class="demo-card">
+    <div class="demo-card-header">
+      <div>
+        <div class="demo-card-title">MorphButton</div>
+        <div class="demo-card-sub">The button IS the loader — contracts, spins, resolves inline</div>
+      </div>
+      <div class="controls">
+        <button class="ctrl-btn active" onclick="setStatus('mb','idle')"><span class="dot"></span>Idle</button>
+        <button class="ctrl-btn" onclick="setStatus('mb','pending')"><span class="dot pending"></span>Pending</button>
+        <button class="ctrl-btn success" onclick="setStatus('mb','fulfilled')"><span class="dot fulfilled"></span>Fulfilled</button>
+        <button class="ctrl-btn danger" onclick="setStatus('mb','rejected')"><span class="dot rejected"></span>Rejected</button>
+      </div>
+    </div>
+    <div class="demo-card-body">
+      <div class="variant-grid">
+        <div class="variant-item">
+          <div class="loader-stage" id="mb-sm"></div>
+          <span class="label">Small</span>
+        </div>
+        <div class="variant-item">
+          <div class="loader-stage" id="mb-md"></div>
+          <span class="label">Medium</span>
+        </div>
+        <div class="variant-item">
+          <div class="loader-stage" id="mb-lg"></div>
+          <span class="label">Large</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="status-pill idle" id="mb-pill">● IDLE</div>
+        <div class="swatch-row" id="mb-swatches"></div>
+      </div>
+    </div>
+    <div class="code-hint">
+      <code>
+        &lt;MorphButton <span class="kw">status</span>={status} <span class="kw">size</span>=<span class="str">"md"</span><br>
+        &nbsp;&nbsp;<span class="kw">onClick</span>={() =&gt; execute(() =&gt; saveData())}&gt;<br>
+        &nbsp;&nbsp;Save changes<br>
+        &lt;/MorphButton&gt;
+      </code>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     6. SIMULATE FULL FLOW
+══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-label">06 — Live simulation</div>
+  <div class="demo-card">
+    <div class="demo-card-header">
+      <div>
+        <div class="demo-card-title">Full promise lifecycle</div>
+        <div class="demo-card-sub">Watch all loaders transition simultaneously</div>
+      </div>
+      <div class="controls">
+        <button class="ctrl-btn" onclick="simulateSuccess()" id="sim-success-btn">▶ Simulate success</button>
+        <button class="ctrl-btn danger" onclick="simulateError()" id="sim-error-btn">▶ Simulate error</button>
+      </div>
+    </div>
+    <div class="demo-card-body" style="gap:32px;">
+      <div id="sim-ms"></div>
+      <div id="sim-pw"></div>
+      <div id="sim-od"></div>
+      <div id="sim-mb"></div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>tristate-loader · Built with zero dependencies · <a href="#">npm link</a> ready</p>
+</footer>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────
+
+const COLOR_PALETTES = [
+  '#6C63FF', '#3B82F6', '#EC4899', '#F59E0B',
+  '#10B981', '#EF4444', '#8B5CF6', '#06B6D4'
+];
+
+const state = {
+  ms: { status: 'idle', color: '#6C63FF', errorColor: '#EF4444', size: 56, speed: 900 },
+  pw: { status: 'idle', color: '#6C63FF', errorColor: '#EF4444' },
+  od: { status: 'idle', color: '#6C63FF', errorColor: '#EF4444', dotCount: 4 },
+  gc: { status: 'idle', color: '#6C63FF', errorColor: '#EF4444' },
+  mb: { status: 'idle', color: '#6C63FF', errorColor: '#EF4444' },
+};
+
+// ── Status updates ────────────────────────────────────────────────
+
+function setStatus(loader, status) {
+  state[loader].status = status;
+  render(loader);
+  updatePill(loader, status);
+  updateControlBtns(loader, status);
+}
+
+function updatePill(loader, status) {
+  const pill = document.getElementById(`${loader}-pill`);
+  if (!pill) return;
+  pill.className = `status-pill ${status}`;
+  const labels = { idle: '● IDLE', pending: '◎ PENDING', fulfilled: '✓ FULFILLED', rejected: '✕ REJECTED' };
+  pill.textContent = labels[status] || status.toUpperCase();
+}
+
+function updateControlBtns(loader, activeStatus) {
+  const map = { idle: 0, pending: 1, fulfilled: 2, rejected: 3 };
+  const container = document.getElementById(`${loader}-controls`) ||
+    document.querySelector(`[onclick*="setStatus('${loader}'"]`)?.closest('.controls');
+  if (!container) return;
+  container.querySelectorAll('.ctrl-btn').forEach((btn, i) => {
+    const statuses = ['idle', 'pending', 'fulfilled', 'rejected'];
+    btn.classList.toggle('active', statuses[i] === activeStatus);
+  });
+}
+
+// ── Swatch helpers ────────────────────────────────────────────────
+
+function initSwatches(loader) {
+  const container = document.getElementById(`${loader}-swatches`);
+  if (!container) return;
+  container.innerHTML = '';
+  COLOR_PALETTES.forEach((c, i) => {
+    const s = document.createElement('div');
+    s.className = 'swatch' + (c === state[loader].color ? ' active' : '');
+    s.style.background = c;
+    s.title = c;
+    s.onclick = () => {
+      state[loader].color = c;
+      container.querySelectorAll('.swatch').forEach(sw => sw.classList.remove('active'));
+      s.classList.add('active');
+      render(loader);
+    };
+    container.appendChild(s);
+  });
+}
+
+// ── Render functions ──────────────────────────────────────────────
+
+function render(loader) {
+  switch(loader) {
+    case 'ms': renderMS(); break;
+    case 'pw': renderPW(); break;
+    case 'od': renderOD(); break;
+    case 'gc': renderGC(); break;
+    case 'mb': renderMB(); break;
+  }
+}
+
+// ─────────────────────────────────────────────
+// MorphSpinner (pure SVG, matches the React component exactly)
+// ─────────────────────────────────────────────
+
+function morphSpinnerHTML(status, size, color, errorColor, speed) {
+  const sw = Math.max(3, size * 0.07);
+  const r  = size/2 - sw;
+  const cx = size/2;
+  const circ = 2 * Math.PI * r;
+  const isPending   = status === 'pending';
+  const isFulfilled = status === 'fulfilled';
+  const isRejected  = status === 'rejected';
+  const isSettled   = isFulfilled || isRejected;
+  const fillColor   = isRejected ? errorColor : color;
+  const cs = size / 56;
+
+  const checkPts = {
+    x1: cx - 9*cs, y1: cx + 0.5*cs,
+    x2: cx - 2.5*cs, y2: cx + 7*cs,
+    x3: cx + 10*cs, y3: cx - 7*cs,
+  };
+
+  let inner = '';
+
+  if (isSettled) {
+    inner += `<circle cx="${cx}" cy="${cx}" fill="${fillColor}"
+      style="animation:tsl-bg-fill 0.4s ease forwards; transform-origin:${cx}px ${cx}px;"/>`;
+  }
+
+  if (!isSettled) {
+    inner += `
+      <g style="transform-origin:${cx}px ${cx}px; animation: tsl-spin ${speed}ms linear infinite;">
+        <circle cx="${cx}" cy="${cx}" r="${r}" stroke="${color}"
+          stroke-width="${sw}" stroke-opacity="0.15"/>
+        <circle cx="${cx}" cy="${cx}" r="${r}" stroke="${color}"
+          stroke-width="${sw}" stroke-linecap="round"
+          stroke-dasharray="${circ*.72} ${circ*.28}"
+          transform="rotate(-90,${cx},${cx})"/>
+      </g>`;
+  }
+
+  if (isSettled) {
+    inner += `<circle cx="${cx}" cy="${cx}" r="${r}" stroke="${fillColor}"
+      stroke-width="${sw}" stroke-linecap="round"
+      stroke-dasharray="${circ}"
+      style="animation:tsl-ring-shrink 0.35s var(--tsl-ease-snap) forwards; transform-origin:${cx}px ${cx}px;"/>`;
+  }
+
+  if (isFulfilled) {
+    inner += `<polyline
+      points="${checkPts.x1},${checkPts.y1} ${checkPts.x2},${checkPts.y2} ${checkPts.x3},${checkPts.y3}"
+      stroke="white" stroke-width="${sw*1.1}" stroke-linecap="round" stroke-linejoin="round"
+      stroke-dasharray="50" stroke-dashoffset="50" fill="none"
+      style="animation:tsl-check-draw 0.35s var(--tsl-ease-spring) 0.35s forwards;"/>`;
+  }
+
+  if (isRejected) {
+    const pad = size * 0.27;
+    inner += `
+      <line x1="${pad}" y1="${pad}" x2="${size-pad}" y2="${size-pad}"
+        stroke="white" stroke-width="${sw*1.1}" stroke-linecap="round"
+        stroke-dasharray="30" stroke-dashoffset="30"
+        style="animation:tsl-cross-draw 0.25s var(--tsl-ease-snap) 0.35s forwards;"/>
+      <line x1="${size-pad}" y1="${pad}" x2="${pad}" y2="${size-pad}"
+        stroke="white" stroke-width="${sw*1.1}" stroke-linecap="round"
+        stroke-dasharray="30" stroke-dashoffset="30"
+        style="animation:tsl-cross-draw 0.25s var(--tsl-ease-snap) 0.45s forwards;"/>`;
+  }
+
+  const shake = isRejected ? 'animation:tsl-error-shake 0.5s var(--tsl-ease-smooth) forwards;' : '';
+  const pulse = isSettled
+    ? `<div style="position:absolute;inset:0;border-radius:50%;border:2px solid ${fillColor};
+         animation:tsl-pulse-ring 0.6s ease 0.2s forwards;pointer-events:none;"></div>`
+    : '';
+
+  return `
+    <div style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;">
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none"
+        style="${shake}">
+        ${inner}
+      </svg>
+      ${pulse}
+    </div>`;
+}
+
+function renderMS() {
+  const { status, color, errorColor, size, speed } = state.ms;
+  const html = morphSpinnerHTML(status, size, color, errorColor, speed);
+  ['sm','md','lg'].forEach((s, i) => {
+    const el = document.getElementById(`ms-${s}`);
+    if (el) el.innerHTML = morphSpinnerHTML(status, [32,56,80][i], color, errorColor, speed);
+  });
+}
+
+// ─────────────────────────────────────────────
+// PulseWave
+// ─────────────────────────────────────────────
+
+function pulseWaveHTML(status, size, color, errorColor) {
+  const bw = size * 0.1, bg = size * 0.07;
+  const barMaxH = size * 0.75, barMinH = size * 0.18;
+  const br = bw / 2;
+  const delays = [0, 0.12, 0.24, 0.12, 0];
+  const count = 5;
+  const isPending   = status === 'pending';
+  const isFulfilled = status === 'fulfilled';
+  const isRejected  = status === 'rejected';
+
+  const bars = Array.from({length: count}, (_, i) => {
+    const d = delays[i] || 0;
+    const barColor = isRejected ? errorColor : color;
+    let anim = '';
+    let transform = '';
+    let opacity = '1';
+    if (isPending) anim = `tsl-wave-bar 0.8s ease-in-out ${d}s infinite`;
+    if (isFulfilled) {
+      anim = `tsl-wave-bar 0s ease forwards`;
+      transform = `scaleY(0)`;
+      opacity = '0';
+    }
+    if (isRejected) {
+      const angle = (i/(count-1))*180 - 90;
+      const rad = angle * Math.PI / 180;
+      const tx = Math.sin(rad)*size*0.7;
+      const ty = -Math.abs(Math.cos(rad))*size*0.5;
+      transform = `translate(${tx}px,${ty}px)`;
+      opacity = '0';
+      anim = `none`;
+    }
+    const h = (isPending) ? barMaxH : barMinH;
+    return `<div style="width:${bw}px;height:${h}px;min-height:${barMinH}px;max-height:${barMaxH}px;
+      border-radius:${br}px;background:${barColor};transform-origin:center bottom;
+      animation:${anim};
+      transition:transform 0.35s var(--tsl-ease-snap) ${i*0.04}s,opacity 0.3s ease ${i*0.04}s,background 0.3s ease;
+      transform:${transform};opacity:${opacity};"></div>`;
+  }).join('');
+
+  let icon = '';
+  if (isFulfilled) {
+    icon = `<svg width="${size*.65}" height="${size*.65}" viewBox="0 0 24 24" fill="none"
+      style="position:absolute;animation:tsl-tick-pop 0.45s var(--tsl-ease-spring) 0.3s both;">
+      <polyline points="3,12 9,18 21,6" stroke="${color}" stroke-width="2.5"
+        stroke-linecap="round" stroke-linejoin="round"
+        stroke-dasharray="50" stroke-dashoffset="50"
+        style="animation:tsl-check-draw 0.4s var(--tsl-ease-spring) 0.45s forwards;"/>
+    </svg>`;
+  }
+  if (isRejected) {
+    icon = `<svg width="${size*.6}" height="${size*.6}" viewBox="0 0 24 24" fill="none"
+      style="position:absolute;animation:tsl-error-pop 0.35s var(--tsl-ease-spring) 0.3s both;">
+      <circle cx="12" cy="12" r="10" fill="${errorColor}" opacity="0.15"/>
+      <line x1="8" y1="8" x2="16" y2="16" stroke="${errorColor}" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="16" y1="8" x2="8" y2="16" stroke="${errorColor}" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>`;
+  }
+
+  return `<div style="position:relative;display:inline-flex;align-items:center;justify-content:center;
+    width:${size}px;height:${size}px;gap:${bg}px;">
+    <div style="display:flex;align-items:center;justify-content:center;gap:${bg}px;
+      position:absolute;inset:0;">${bars}</div>
+    ${icon}
+  </div>`;
+}
+
+function renderPW() {
+  const { status, color, errorColor } = state.pw;
+  const el = document.getElementById('pw-stage');
+  if (el) el.innerHTML = pulseWaveHTML(status, 56, color, errorColor);
+}
+
+// ─────────────────────────────────────────────
+// OrbitDots
+// ─────────────────────────────────────────────
+
+function orbitDotsHTML(status, size, color, errorColor, dotCount) {
+  const cx = size/2, radius = size*0.33, dotR = size*0.09;
+  const orbitDur = 1.8;
+  const isPending   = status === 'pending';
+  const isFulfilled = status === 'fulfilled';
+  const isRejected  = status === 'rejected';
+
+  let dots = '';
+  for (let i = 0; i < dotCount; i++) {
+    const angle    = (i / dotCount) * 360;
+    const rad      = (angle * Math.PI) / 180;
+    const dotX     = cx + radius * Math.cos(rad);
+    const dotY     = cx + radius * Math.sin(rad);
+    const dotColor = isRejected ? errorColor : color;
+    let style = '';
+    if (isPending) {
+      style = `transform-origin:${cx}px ${cx}px;
+        animation:tsl-orbit ${orbitDur}s linear ${-i*(orbitDur/dotCount)}s infinite,
+                  tsl-dot-breathe 0.8s ease-in-out ${(i/dotCount)*0.8}s infinite;`;
+    } else if (isFulfilled) {
+      style = `transform-origin:${cx}px ${cx}px;
+        animation:tsl-orbit-collapse 0.4s var(--tsl-ease-snap) ${i*0.04}s forwards;
+        --angle:${angle}deg;--radius:${radius}px;`;
+    } else if (isRejected) {
+      const flyDist = size*0.85;
+      const fx = cx + flyDist*Math.cos(rad);
+      const fy = cx + flyDist*Math.sin(rad);
+      style = `transition:transform ${0.3+i*0.04}s var(--tsl-ease-snap),opacity 0.3s ease;
+        transform:translate(${fx-dotX}px,${fy-dotY}px);opacity:0;`;
+    }
+    dots += `<circle cx="${dotX}" cy="${dotY}" r="${dotR}" fill="${dotColor}" style="${style}"/>`;
+  }
+
+  // Track ring
+  const track = isPending
+    ? `<circle cx="${cx}" cy="${cx}" r="${radius}" stroke="${color}" stroke-width="1"
+        stroke-opacity="0.1" fill="none" stroke-dasharray="4 4"/>`
+    : '';
+
+  // Center dot
+  const center = isPending
+    ? `<circle cx="${cx}" cy="${cx}" r="${dotR*0.5}" fill="${color}" opacity="0.4"/>` : '';
+
+  // Settled icons
+  let settled = '';
+  if (isFulfilled) {
+    const pad = size*0.22, mid = size*0.55;
+    settled = `
+      <circle cx="${cx}" cy="${cx}" r="${size*0.38}" fill="${color}"
+        style="animation:tsl-center-pop 0.45s var(--tsl-ease-spring) 0.3s both;"/>
+      <polyline points="${pad},${mid} ${cx-size*.02},${size-pad} ${size-pad},${pad}"
+        stroke="white" stroke-width="${size*.075}" stroke-linecap="round" stroke-linejoin="round"
+        stroke-dasharray="60" stroke-dashoffset="60" fill="none"
+        style="animation:tsl-check-draw 0.35s var(--tsl-ease-spring) 0.6s forwards;"/>`;
+  }
+  if (isRejected) {
+    const pad = size*0.28;
+    settled = `
+      <circle cx="${cx}" cy="${cx}" r="${size*0.38}" fill="${errorColor}"
+        style="animation:tsl-center-pop 0.4s var(--tsl-ease-spring) 0.25s both;"/>
+      <line x1="${pad}" y1="${pad}" x2="${size-pad}" y2="${size-pad}"
+        stroke="white" stroke-width="${size*.075}" stroke-linecap="round"
+        stroke-dasharray="30" stroke-dashoffset="30"
+        style="animation:tsl-cross-draw 0.22s ease 0.4s forwards;"/>
+      <line x1="${size-pad}" y1="${pad}" x2="${pad}" y2="${size-pad}"
+        stroke="white" stroke-width="${size*.075}" stroke-linecap="round"
+        stroke-dasharray="30" stroke-dashoffset="30"
+        style="animation:tsl-cross-draw 0.22s ease 0.5s forwards;"/>`;
+  }
+
+  const pulse = isFulfilled
+    ? `<div style="position:absolute;inset:0;border-radius:50%;border:2px solid ${color};
+        animation:tsl-pulse-ring 0.7s ease 0.4s both;pointer-events:none;"></div>` : '';
+
+  const shake = isRejected ? 'animation:tsl-error-shake 0.5s ease 0.6s;' : '';
+
+  return `<div style="position:relative;display:inline-flex;align-items:center;
+    justify-content:center;width:${size}px;height:${size}px;">
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none"
+      overflow="visible" style="${shake}">
+      ${track}${dots}${center}${settled}
+    </svg>
+    ${pulse}
+  </div>`;
+}
+
+function renderOD() {
+  const { status, color, errorColor, dotCount } = state.od;
+  const el = document.getElementById('od-stage');
+  if (el) el.innerHTML = orbitDotsHTML(status, 64, color, errorColor, dotCount);
+}
+
+// ─────────────────────────────────────────────
+// GlassCard
+// ─────────────────────────────────────────────
+
+function glassCardHTML(status, width, height, color, errorColor) {
+  const isPending   = status === 'pending';
+  const isFulfilled = status === 'fulfilled';
+  const isRejected  = status === 'rejected';
+  const isIdle      = status === 'idle';
+  const bColor = isRejected ? errorColor : isFulfilled ? color : 'rgba(120,120,150,0.25)';
+  const bgC    = isRejected ? `${errorColor}10` : isFulfilled ? `${color}10` : 'rgba(255,255,255,0.04)';
+  const boxShadow = isFulfilled
+    ? `0 0 0 3px ${color}22, 0 8px 32px ${color}18`
+    : isRejected ? `0 0 0 3px ${errorColor}22` : '0 4px 24px rgba(0,0,0,0.12)';
+  const shake = isRejected ? 'animation:tsl-error-shake 0.5s ease 0.1s;' : '';
+
+  const shimmer = (isPending||isIdle) ? `
+    <div style="position:absolute;inset:0;background:linear-gradient(105deg,
+      transparent 30%,rgba(255,255,255,0.12) 50%,transparent 70%);
+      animation:${isPending?'tsl-shimmer 1.6s ease-in-out infinite':'none'};
+      pointer-events:none;"></div>` : '';
+
+  const skeleton = (isPending||isIdle) ? `
+    <div style="position:absolute;inset:0;padding:20px;display:flex;flex-direction:column;gap:10px;justify-content:center;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(120,120,150,0.18);flex-shrink:0;"></div>
+        <div style="height:10px;border-radius:5px;width:40%;background:rgba(120,120,150,0.18);"></div>
+      </div>
+      <div style="height:9px;border-radius:5px;width:75%;background:rgba(120,120,150,0.15);"></div>
+      <div style="height:9px;border-radius:5px;width:55%;background:rgba(120,120,150,0.15);"></div>
+      <div style="height:9px;border-radius:5px;width:85%;background:rgba(120,120,150,0.15);"></div>
+    </div>` : '';
+
+  const success = isFulfilled ? `
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;gap:10px;animation:tsl-glass-fade-in 0.4s ease forwards;">
+      <div style="width:44px;height:44px;border-radius:50%;background:${color};display:flex;
+        align-items:center;justify-content:center;
+        animation:tsl-center-pop 0.5s var(--tsl-ease-spring) 0.1s both;
+        box-shadow:0 4px 16px ${color}55;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <polyline points="4,13 9,18 20,6" stroke="white" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round"
+            stroke-dasharray="50" stroke-dashoffset="50"
+            style="animation:tsl-check-draw 0.3s var(--tsl-ease-spring) 0.45s forwards;"/>
+        </svg>
+      </div>
+      <span style="font-size:13px;font-weight:600;color:${color};letter-spacing:0.02em;
+        animation:tsl-glass-fade-in 0.4s ease 0.5s both;opacity:0;">Loaded successfully</span>
+    </div>` : '';
+
+  const error = isRejected ? `
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;gap:10px;animation:tsl-glass-fade-in 0.3s ease forwards;">
+      <div style="width:44px;height:44px;border-radius:50%;background:${errorColor};display:flex;
+        align-items:center;justify-content:center;
+        animation:tsl-center-pop 0.4s var(--tsl-ease-spring) 0.05s both;
+        box-shadow:0 4px 16px ${errorColor}44;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <line x1="6" y1="6" x2="18" y2="18" stroke="white" stroke-width="2.5" stroke-linecap="round"
+            stroke-dasharray="20" stroke-dashoffset="20" style="animation:tsl-cross-draw 0.2s ease 0.3s forwards;"/>
+          <line x1="18" y1="6" x2="6" y2="18" stroke="white" stroke-width="2.5" stroke-linecap="round"
+            stroke-dasharray="20" stroke-dashoffset="20" style="animation:tsl-cross-draw 0.2s ease 0.38s forwards;"/>
+        </svg>
+      </div>
+      <span style="font-size:13px;font-weight:600;color:${errorColor};
+        animation:tsl-glass-fade-in 0.3s ease 0.45s both;opacity:0;">Failed to load</span>
+    </div>` : '';
+
+  return `<div style="position:relative;width:${width}px;height:${height}px;border-radius:16px;
+    border:1.5px solid ${bColor};background:${bgC};backdrop-filter:blur(12px);overflow:hidden;
+    transition:border-color 0.4s ease,background 0.4s ease,box-shadow 0.4s ease;
+    box-shadow:${boxShadow};${shake}">
+    ${shimmer}${skeleton}${success}${error}
+  </div>`;
+}
+
+function renderGC() {
+  const { status, color, errorColor } = state.gc;
+  const el = document.getElementById('gc-stage');
+  if (el) el.innerHTML = glassCardHTML(status, 280, 160, color, errorColor);
+}
+
+// ─────────────────────────────────────────────
+// MorphButton
+// ─────────────────────────────────────────────
+
+const MB_SIZES = {
+  sm: { h:36, fs:13, is:18, sw:2.5 },
+  md: { h:44, fs:15, is:22, sw:2.5 },
+  lg: { h:52, fs:17, is:26, sw:2.5 },
+};
+
+function morphButtonHTML(status, sizeKey, color, errorColor, label='Save changes') {
+  const d = MB_SIZES[sizeKey];
+  const isPending   = status === 'pending';
+  const isFulfilled = status === 'fulfilled';
+  const isRejected  = status === 'rejected';
+  const isActive    = isPending || isFulfilled || isRejected;
+  const fillColor   = isRejected ? errorColor : color;
+  const bRadius     = isActive ? d.h/2 : 10;
+  const cx = d.is/2, r = cx - d.sw, circ = 2*Math.PI*r;
+  const shadow = isFulfilled ? `0 4px 20px ${color}55`
+    : isRejected ? `0 4px 20px ${errorColor}44`
+    : `0 4px 14px ${color}44`;
+  const shake = isRejected ? 'animation:tsl-error-shake 0.5s ease;' : '';
+
+  const widthStyle = isActive
+    ? `width:${d.h}px;min-width:${d.h}px;padding:0;`
+    : `padding:0 ${d.h*0.54}px;`;
+
+  const label_el = `<span style="position:absolute;transition:opacity 0.2s ease,transform 0.2s ease;
+    opacity:${isActive?0:1};transform:${isActive?'scale(0.8)':'scale(1)'};
+    white-space:nowrap;pointer-events:none;">${label}</span>`;
+
+  let iconInner = '';
+  if (isPending) {
+    iconInner = `<g style="transform-origin:${cx}px ${cx}px;animation:tsl-spin 0.8s linear infinite;">
+      <circle cx="${cx}" cy="${cx}" r="${r}" stroke="rgba(255,255,255,0.25)" stroke-width="${d.sw}"/>
+      <circle cx="${cx}" cy="${cx}" r="${r}" stroke="white" stroke-width="${d.sw}"
+        stroke-linecap="round" stroke-dasharray="${circ*.7} ${circ*.3}"
+        transform="rotate(-90,${cx},${cx})"/>
+    </g>`;
+  }
+  if (isFulfilled || isRejected) {
+    iconInner += `<circle cx="${cx}" cy="${cx}" r="${cx*.85}" fill="rgba(255,255,255,0.2)"
+      style="animation:tsl-bg-fill 0.3s ease forwards;"/>`;
+  }
+  if (isFulfilled) {
+    const pad = d.is*.22;
+    iconInner += `<polyline points="${pad},${cx+d.is*.04} ${cx-d.is*.03},${d.is-pad} ${d.is-pad},${pad}"
+      stroke="white" stroke-width="${d.sw}" stroke-linecap="round" stroke-linejoin="round"
+      stroke-dasharray="50" stroke-dashoffset="50" fill="none"
+      style="animation:tsl-check-draw 0.3s var(--tsl-ease-spring) 0.15s forwards;"/>`;
+  }
+  if (isRejected) {
+    const pad = d.is*.28;
+    iconInner += `
+      <line x1="${pad}" y1="${pad}" x2="${d.is-pad}" y2="${d.is-pad}"
+        stroke="white" stroke-width="${d.sw}" stroke-linecap="round"
+        stroke-dasharray="25" stroke-dashoffset="25"
+        style="animation:tsl-cross-draw 0.2s ease 0.1s forwards;"/>
+      <line x1="${d.is-pad}" y1="${pad}" x2="${pad}" y2="${d.is-pad}"
+        stroke="white" stroke-width="${d.sw}" stroke-linecap="round"
+        stroke-dasharray="25" stroke-dashoffset="25"
+        style="animation:tsl-cross-draw 0.2s ease 0.18s forwards;"/>`;
+  }
+
+  const icon_el = `<span style="position:absolute;transition:opacity 0.2s ease 0.15s,transform 0.2s ease 0.15s;
+    opacity:${isActive?1:0};transform:${isActive?'scale(1)':'scale(0.6)'};
+    display:flex;align-items:center;justify-content:center;">
+    <svg width="${d.is}" height="${d.is}" viewBox="0 0 ${d.is} ${d.is}" fill="none">
+      ${iconInner}
+    </svg>
+  </span>`;
+
+  const pulse = isFulfilled ? `<span style="position:absolute;inset:0;border-radius:${bRadius}px;
+    border:2px solid ${color};animation:tsl-pulse-ring 0.6s ease 0.15s both;pointer-events:none;"></span>` : '';
+
+  return `<button style="position:relative;display:inline-flex;align-items:center;
+    justify-content:center;height:${d.h}px;${widthStyle}
+    font-size:${d.fs}px;font-weight:600;color:white;background:${fillColor};
+    border:none;border-radius:${bRadius}px;cursor:pointer;outline:none;overflow:hidden;
+    font-family:inherit;
+    transition:width 0.45s var(--tsl-ease-spring),min-width 0.45s var(--tsl-ease-spring),
+      border-radius 0.45s var(--tsl-ease-spring),background 0.35s ease,padding 0.45s var(--tsl-ease-spring);
+    ${shake}box-shadow:${shadow};">
+    ${label_el}${icon_el}${pulse}
+  </button>`;
+}
+
+function renderMB() {
+  const { status, color, errorColor } = state.mb;
+  ['sm','md','lg'].forEach(s => {
+    const el = document.getElementById(`mb-${s}`);
+    if (el) el.innerHTML = morphButtonHTML(status, s, color, errorColor);
+  });
+}
+
+// ─────────────────────────────────────────────
+// Simulation
+// ─────────────────────────────────────────────
+
+function renderSim(status) {
+  document.getElementById('sim-ms').innerHTML = morphSpinnerHTML(status, 56, '#6C63FF', '#EF4444', 900);
+  document.getElementById('sim-pw').innerHTML = pulseWaveHTML(status, 56, '#6C63FF', '#EF4444');
+  document.getElementById('sim-od').innerHTML = orbitDotsHTML(status, 64, '#6C63FF', '#EF4444', 4);
+  document.getElementById('sim-mb').innerHTML = morphButtonHTML(status, 'md', '#6C63FF', '#EF4444', 'Submit');
+}
+
+function simulateSuccess() {
+  renderSim('pending');
+  setTimeout(() => renderSim('fulfilled'), 2000);
+}
+function simulateError() {
+  renderSim('pending');
+  setTimeout(() => renderSim('rejected'), 2000);
+}
+
+// ─────────────────────────────────────────────
+// Misc
+// ─────────────────────────────────────────────
+
+function updateMSSpeed(val) {
+  state.ms.speed = parseInt(val);
+  renderMS();
+}
+
+// ── Bootstrap ─────────────────────────────────────────────────────
+
+window.addEventListener('DOMContentLoaded', () => {
+  // Init swatches
+  ['ms','pw','od','gc','mb'].forEach(initSwatches);
+
+  // Initial render
+  renderMS();
+  renderPW();
+  renderOD();
+  renderGC();
+  renderMB();
+  renderSim('idle');
+});
+</script>
+</body>
+</html>

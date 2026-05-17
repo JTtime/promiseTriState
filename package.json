@@ -1,10 +1,7 @@
 {
   "name": "tristate-loader",
-
   "version": "0.1.0",
-
   "description": "Seamless promise-state transitions for React. Pending → fulfilled → rejected with smooth integrated UI.",
-
   "keywords": [
     "react",
     "loader",
@@ -13,19 +10,12 @@
     "typescript",
     "hook"
   ],
-
   "author": "Your Name",
-
   "license": "MIT",
-
   "type": "module",
-
   "main": "./dist/index.cjs",
-
   "module": "./dist/index.js",
-
   "types": "./dist/index.d.ts",
-
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -33,64 +23,46 @@
       "require": "./dist/index.cjs"
     }
   },
-
   "files": [
     "dist",
     "README.md"
   ],
-
   "sideEffects": false,
-
   "scripts": {
     "dev": "vite build --watch",
-
     "build": "vite build",
-
     "test": "vitest run",
-
     "test:watch": "vitest",
-
     "coverage": "vitest run --coverage",
-
     "storybook": "storybook dev -p 6006",
-
     "build-storybook": "storybook build",
-
     "typecheck": "tsc --noEmit",
-
     "prepublishOnly": "npm run build && npm run test"
   },
-
   "peerDependencies": {
     "react": ">=18",
     "react-dom": ">=18"
   },
-
-  "dependencies": {},
-
   "devDependencies": {
-    "@testing-library/react": "^16.3.2",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.2",
-    "@vitest/coverage-v8": "^4.1.6",
-    "jsdom": "^29.1.1",
-    "typescript": "^6.0.3",
-    "vite": "^8.0.13",
-    "vite-plugin-dts": "^5.0.0",
-    "vitest": "^4.1.6",
-
-    "storybook": "^10.4.0",
-    "@storybook/react-vite": "^10.4.0",
-
     "@chromatic-com/storybook": "^5.2.1",
-
-    "@storybook/addon-vitest": "^10.4.0",
     "@storybook/addon-a11y": "^10.4.0",
     "@storybook/addon-docs": "^10.4.0",
     "@storybook/addon-mcp": "^0.6.0",
-
+    "@storybook/addon-vitest": "^10.4.0",
+    "@storybook/react-vite": "^10.4.0",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^25.8.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "@vitest/browser-playwright": "^4.1.6",
+    "@vitest/coverage-v8": "^4.1.6",
+    "jsdom": "^29.1.1",
     "playwright": "^1.60.0",
-    "@vitest/browser-playwright": "^4.1.6"
+    "storybook": "^10.4.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.13",
+    "vite-plugin-dts": "^5.0.0",
+    "vitest": "^4.1.6"
   }
 }

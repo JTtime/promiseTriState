@@ -6,8 +6,14 @@ import { resolve } from 'path';
 export default defineConfig({
   plugins: [
     react(),
-    dts({ include: ['src'], rollupTypes: true }),
+    dts({ include: ['src'], rollupTypes: true, aliasesExclude: [/^@/], }), 
   ],
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, './src'),  // ← ADD THIS
+    },
+  },
+
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
